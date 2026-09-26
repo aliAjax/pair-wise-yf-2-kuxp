@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Clock, Volume2, Sun, Armchair } from 'lucide-react';
+import { MapPin, Clock, Volume2, Sun, Armchair, CalendarCheck, Flame } from 'lucide-react';
 import type { Bench } from '@/types';
 import { MATERIAL_LABELS, SHADE_LABELS, NOISE_LABELS, STAY_DURATION_LABELS } from '@/types';
 import Rating from '@/components/Rating/Rating';
 import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { formatRelativeVisit, getCurrentStreak, getLatestVisitKey, getVisitCount } from '@/utils/visits';
 
 interface BenchCardProps {
   bench: Bench;
@@ -15,6 +16,10 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
   const comfortScore = calculateComfortScore(bench);
   const comfortLevel = getComfortLevel(comfortScore);
   const comfortColor = getComfortColor(comfortScore);
+
+  const visitCount = getVisitCount(bench);
+  const latestVisit = getLatestVisitKey(bench);
+  const streak = getCurrentStreak(bench);
 
   const staggerClass = `stagger-${(index % 6) + 1}`;
 
@@ -38,6 +43,13 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
         <div className="absolute top-3 left-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs text-ink-light">
           {MATERIAL_LABELS[bench.material]}
         </div>
+
+        {streak >= 3 && (
+          <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2 py-1 bg-orange-50/90 backdrop-blur-sm text-orange-600 rounded-full text-xs font-medium border border-orange-200/60">
+            <Flame className="w-3 h-3" />
+            连续 {streak} 天
+          </div>
+        )}
       </div>
 
       <div className="p-4">
@@ -63,6 +75,19 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-moss-green/10 text-moss-green text-xs rounded-md">
               有靠背
             </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 mb-3 px-2.5 py-1.5 bg-warm-cream/60 rounded-md text-xs">
+          <CalendarCheck className="w-3.5 h-3.5 text-moss-green flex-shrink-0" />
+          {latestVisit ? (
+            <span className="text-ink-light">
+              最近到访 <span className="text-deep-brown font-medium">{formatRelativeVisit(latestVisit)}</span>
+              <span className="mx-1.5 text-deep-brown/20">·</span>
+              累计 <span className="text-deep-brown font-medium">{visitCount}</span> 次
+            </span>
+          ) : (
+            <span className="text-ink-light/70">还没有到访记录</span>
           )}
         </div>
 

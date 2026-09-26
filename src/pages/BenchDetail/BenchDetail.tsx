@@ -14,6 +14,7 @@ import {
   Sunset,
   Moon,
   CloudSun,
+  Flame,
 } from 'lucide-react';
 import { useBenchStore } from '@/store/useBenchStore';
 import {
@@ -26,7 +27,9 @@ import {
 } from '@/types';
 import type { TimePeriodType } from '@/types';
 import Rating from '@/components/Rating/Rating';
+import VisitPanel from '@/components/VisitPanel/VisitPanel';
 import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { formatRelativeVisit, getLatestVisitKey, getCurrentStreak, getVisitCount } from '@/utils/visits';
 
 export default function BenchDetail() {
   const { id } = useParams<{ id: string }>();
@@ -61,6 +64,10 @@ export default function BenchDetail() {
   const comfortScore = calculateComfortScore(bench);
   const comfortLevel = getComfortLevel(comfortScore);
   const comfortColor = getComfortColor(comfortScore);
+
+  const latestVisit = getLatestVisitKey(bench);
+  const streak = getCurrentStreak(bench);
+  const visitCount = getVisitCount(bench);
 
   const timePeriodIcons: Record<TimePeriodType, typeof Sunrise> = {
     morning: Sunrise,
@@ -106,13 +113,26 @@ export default function BenchDetail() {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h1 className="font-serif text-2xl font-bold text-deep-brown mb-2">
-                    {bench.name}
-                  </h1>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h1 className="font-serif text-2xl font-bold text-deep-brown">
+                      {bench.name}
+                    </h1>
+                    {streak >= 3 && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-medium rounded-full border border-orange-200/60">
+                        <Flame className="w-3 h-3" />
+                        连续 {streak} 天
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1 text-ink-light">
                     <MapPin className="w-4 h-4 flex-shrink-0" />
                     <span>{bench.location}</span>
                   </div>
+                  {latestVisit && (
+                    <div className="mt-1 text-xs text-ink-light">
+                      最近到访：{formatRelativeVisit(latestVisit)} · 累计 {visitCount} 次
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-right">
@@ -259,6 +279,8 @@ export default function BenchDetail() {
             )}
           </div>
 
+          <VisitPanel bench={bench} />
+
           <div className="paper-texture rounded-xl shadow-paper p-6 fade-in opacity-0 stagger-3">
             <h3 className="font-serif text-sm font-semibold text-deep-brown mb-3">
               档案信息
@@ -275,6 +297,10 @@ export default function BenchDetail() {
                 <span className="text-deep-brown">
                   {new Date(bench.updatedAt).toLocaleDateString('zh-CN')}
                 </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-light">到访次数</span>
+                <span className="text-deep-brown">{visitCount} 次</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-light">时段记录</span>
