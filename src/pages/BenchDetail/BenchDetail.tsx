@@ -26,7 +26,9 @@ import {
 } from '@/types';
 import type { TimePeriodType } from '@/types';
 import Rating from '@/components/Rating/Rating';
+import VisitTracker from '@/components/VisitTracker/VisitTracker';
 import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { getVisitCount, formatLatestVisit } from '@/utils/visits';
 
 export default function BenchDetail() {
   const { id } = useParams<{ id: string }>();
@@ -214,7 +216,9 @@ export default function BenchDetail() {
         </div>
 
         <div className="space-y-6">
-          <div className="paper-texture rounded-xl shadow-paper p-6 fade-in opacity-0 stagger-2">
+          <VisitTracker bench={bench} />
+
+          <div className="paper-texture rounded-xl shadow-paper p-6 fade-in opacity-0 stagger-3">
             <h2 className="font-serif text-lg font-semibold text-deep-brown mb-4">
               分时段体验
             </h2>
@@ -259,7 +263,7 @@ export default function BenchDetail() {
             )}
           </div>
 
-          <div className="paper-texture rounded-xl shadow-paper p-6 fade-in opacity-0 stagger-3">
+          <div className="paper-texture rounded-xl shadow-paper p-6 fade-in opacity-0 stagger-4">
             <h3 className="font-serif text-sm font-semibold text-deep-brown mb-3">
               档案信息
             </h3>
@@ -274,6 +278,16 @@ export default function BenchDetail() {
                 <span className="text-ink-light">更新时间</span>
                 <span className="text-deep-brown">
                   {new Date(bench.updatedAt).toLocaleDateString('zh-CN')}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-light">累计到访</span>
+                <span className="text-deep-brown">{getVisitCount(bench)} 次</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-light">最近到访</span>
+                <span className="text-deep-brown">
+                  {formatLatestVisit(bench) ?? '暂无'}
                 </span>
               </div>
               <div className="flex justify-between">

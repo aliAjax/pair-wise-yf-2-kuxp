@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { Bench, BenchExperience, MaterialType, OrientationType, ShadeLevelType, NoiseLevelType, StayDurationType } from '@/types';
+import type { Bench, BenchExperience, MaterialType, OrientationType, ShadeLevelType, NoiseLevelType } from '@/types';
 import { loadBenches, saveBenches } from '@/utils/storage';
 import { generateId } from '@/utils/comfort';
+import { validateVisitDate } from '@/utils/visits';
 import { mockBenches } from '@/data/mockBenches';
 
 interface BenchState {
@@ -29,6 +30,9 @@ interface BenchActions {
   addExperience: (benchId: string, experience: Omit<BenchExperience, 'id' | 'benchId'>) => void;
   updateExperience: (benchId: string, expId: string, updates: Partial<BenchExperience>) => void;
   deleteExperience: (benchId: string, expId: string) => void;
+  /** 记录某天到访；同一天重复记录时覆盖当天备注。校验失败返回错误信息，成功返回 null */
+  recordVisit: (benchId: string, date: string, note: string) => string | null;
+  deleteVisit: (benchId: string, date: string) => void;
   getFilteredBenches: () => Bench[];
 }
 
@@ -75,6 +79,7 @@ export const useBenchStore = create<BenchState & BenchActions>((set, get) => ({
       ...benchData,
       id: generateId(),
       experiences: [],
+      visits: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -84,11 +89,20 @@ export const useBenchStore = create<BenchState & BenchActions>((set, get) => ({
   },
 
   updateBench: (id, updates) => {
-    const newBenches = get().benches.map((bench) =>
-      bench.id === id
-        ? { ...bench, ...updates, updatedAt: new Date().toISOString() }
-        : bench
-    );
+    const newBenches = get().benches.map((bench) => {
+      if (bench.id !== id) return bench;
+      // 编辑名称、评分等字段时保留已有的到访与时段记录，防止误传覆盖
+      const safeUpdates = { ...updates };
+      delete safeUpdates.experiences;
+      delete safeUpdates.visits;
+      return {
+        ...bench,
+        ...safeUpdates,
+        experiences: bench.experiences,
+        visits: bench.visits ?? [],
+        updatedAt: new Date().toISOString(),
+      };
+    });
     set({ benches: newBenches });
     saveBenches(newBenches);
   },
@@ -144,6 +158,43 @@ export const useBenchStore = create<BenchState & BenchActions>((set, get) => ({
         ? {
             ...bench,
             experiences: bench.experiences.filter((exp) => exp.id !== expId),
+            updatedAt: new Date().toISOString(),
+          }
+        : bench
+    );
+    set({ benches: newBenches });
+    saveBenches(newBenches);
+  },
+
+  recordVisit: (benchId, date, note) => {
+    const bench = get().benches.find((b) => b.id === benchId);
+    if (!bench) return '长椅档案不存在';
+
+    const error = validateVisitDate(date, bench);
+    if (error) return error;
+
+    const trimmedNote = note.trim();
+    const timestamp = new Date().toISOString();
+    const existing = (bench.visits ?? []).filter((v) => v.date !== date);
+    const visits = [
+      ...existing,
+      { date, note: trimmedNote, updatedAt: timestamp },
+    ].sort((a, b) => (a.date < b.date ? 1 : -1));
+
+    const newBenches = get().benches.map((b) =>
+      b.id === benchId ? { ...b, visits, updatedAt: timestamp } : b
+    );
+    set({ benches: newBenches });
+    saveBenches(newBenches);
+    return null;
+  },
+
+  deleteVisit: (benchId, date) => {
+    const newBenches = get().benches.map((bench) =>
+      bench.id === benchId
+        ? {
+            ...bench,
+            visits: (bench.visits ?? []).filter((v) => v.date !== date),
             updatedAt: new Date().toISOString(),
           }
         : bench

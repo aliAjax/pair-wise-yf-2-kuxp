@@ -1,4 +1,14 @@
-import type { Bench } from '@/types';
+import type { Bench, BenchVisit } from '@/types';
+import { getTodayKey, shiftDateKey } from '@/utils/visits';
+
+/** 生成相对今天的示例到访记录，偏移为负数表示几天前 */
+function makeVisits(entries: Array<[offset: number, note: string]>): BenchVisit[] {
+  return entries.map(([offset, note]) => ({
+    date: shiftDateKey(getTodayKey(), offset),
+    note,
+    updatedAt: new Date().toISOString(),
+  }));
+}
 
 export const mockBenches: Bench[] = [
   {
@@ -15,6 +25,12 @@ export const mockBenches: Bench[] = [
     stayDuration: 'long',
     rating: 5,
     review: '公园里最爱的长椅，夏天梧桐叶茂盛时完全遮阴，偶尔能听到鸟鸣。',
+    visits: makeVisits([
+      [0, '散步回来照例坐了一会儿，风很舒服。'],
+      [-1, '昨天来的时候有只橘猫蹲在脚边。'],
+      [-2, '连续第三天来了，已经成了习惯。'],
+      [-9, '上周六早晨人很少，很安静。'],
+    ]),
     experiences: [
       {
         id: 'exp-001',
@@ -55,6 +71,10 @@ export const mockBenches: Bench[] = [
     stayDuration: 'medium',
     rating: 3,
     review: '视野很好能看到江景，但是夏天太烫，冬天又太凉。',
+    visits: makeVisits([
+      [0, '今天江风不小，看了会儿船。'],
+      [-1, '昨天傍晚日落很漂亮。'],
+    ]),
     experiences: [
       {
         id: 'exp-004',
@@ -121,6 +141,9 @@ export const mockBenches: Bench[] = [
     stayDuration: 'verylong',
     rating: 4,
     review: '在廊檐下，下雨也不怕，周围很安静，适合看书。',
+    visits: makeVisits([
+      [0, '今天在这里读完了一章，环境依旧安静。'],
+    ]),
     experiences: [
       {
         id: 'exp-008',
@@ -180,6 +203,9 @@ export const mockBenches: Bench[] = [
     stayDuration: 'long',
     rating: 5,
     review: '学生时代的回忆，两排梧桐树完全遮住阳光，夏天特别凉快。',
+    visits: makeVisits([
+      [-12, '隔了很久回来，林荫道还是老样子。'],
+    ]),
     experiences: [
       {
         id: 'exp-011',

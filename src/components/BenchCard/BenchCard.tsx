@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Clock, Volume2, Sun, Armchair } from 'lucide-react';
+import { MapPin, Clock, Volume2, Sun, Armchair, CalendarCheck, History, Flame } from 'lucide-react';
 import type { Bench } from '@/types';
 import { MATERIAL_LABELS, SHADE_LABELS, NOISE_LABELS, STAY_DURATION_LABELS } from '@/types';
 import Rating from '@/components/Rating/Rating';
 import { calculateComfortScore, getComfortLevel, getComfortColor } from '@/utils/comfort';
+import { getVisitCount, getVisitStreak, formatLatestVisit } from '@/utils/visits';
 
 interface BenchCardProps {
   bench: Bench;
@@ -15,6 +16,10 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
   const comfortScore = calculateComfortScore(bench);
   const comfortLevel = getComfortLevel(comfortScore);
   const comfortColor = getComfortColor(comfortScore);
+
+  const visitCount = getVisitCount(bench);
+  const streak = getVisitStreak(bench);
+  const latestVisitText = formatLatestVisit(bench);
 
   const staggerClass = `stagger-${(index % 6) + 1}`;
 
@@ -29,7 +34,7 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
             <Armchair className="w-10 h-10 text-moss-green/50" />
           </div>
         </div>
-        
+
         <div className="absolute top-3 right-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs font-medium">
           <span className={comfortColor}>{comfortLevel}</span>
           <span className="text-ink-light ml-1">{comfortScore}</span>
@@ -38,13 +43,20 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
         <div className="absolute top-3 left-3 px-2 py-1 bg-white/80 backdrop-blur-sm rounded-full text-xs text-ink-light">
           {MATERIAL_LABELS[bench.material]}
         </div>
+
+        {streak >= 3 && (
+          <div className="absolute bottom-3 left-3 inline-flex items-center gap-1 px-2 py-1 bg-orange-500/90 text-white backdrop-blur-sm rounded-full text-xs font-medium shadow-sm">
+            <Flame className="w-3 h-3" />
+            连续到访 {streak} 天
+          </div>
+        )}
       </div>
 
       <div className="p-4">
         <h3 className="font-serif text-lg font-semibold text-deep-brown mb-1 line-clamp-1">
           {bench.name}
         </h3>
-        
+
         <div className="flex items-center gap-1 text-ink-light text-sm mb-3">
           <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="line-clamp-1">{bench.location}</span>
@@ -66,12 +78,23 @@ export default function BenchCard({ bench, index = 0 }: BenchCardProps) {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-2">
           <Rating value={bench.rating} readOnly size="sm" />
           <div className="flex items-center gap-1 text-xs text-ink-light">
             <Clock className="w-3.5 h-3.5" />
             <span>{STAY_DURATION_LABELS[bench.stayDuration]}</span>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-deep-brown/5 text-xs">
+          <span className="inline-flex items-center gap-1 text-moss-green">
+            <CalendarCheck className="w-3.5 h-3.5" />
+            {latestVisitText ?? '还没有到访记录'}
+          </span>
+          <span className="inline-flex items-center gap-1 text-ink-light">
+            <History className="w-3.5 h-3.5" />
+            累计 {visitCount} 次
+          </span>
         </div>
       </div>
     </div>

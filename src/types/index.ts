@@ -13,6 +13,16 @@ export interface BenchExperience {
   rating: number;
 }
 
+/** 一次到访记录（同一张长椅同一天只保留一条） */
+export interface BenchVisit {
+  /** 到访日期，本地时区，格式 YYYY-MM-DD */
+  date: string;
+  /** 当天的一句感受，重复提交时会被后一次覆盖 */
+  note: string;
+  /** 最近一次提交/覆盖该记录的时间，ISO 字符串 */
+  updatedAt: string;
+}
+
 export interface Bench {
   id: string;
   name: string;
@@ -28,6 +38,8 @@ export interface Bench {
   rating: number;
   review: string;
   experiences: BenchExperience[];
+  /** 旧档案可能没有到访记录，按零次处理 */
+  visits?: BenchVisit[];
   createdAt: string;
   updatedAt: string;
 }
